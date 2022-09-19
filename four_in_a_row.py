@@ -1,3 +1,6 @@
+from colorama import Fore, Style
+
+
 class Board:
 	"""A board is a 7 * 6 board of red, black or empty pieces"""
 	WIDTH = 7
@@ -71,7 +74,8 @@ class Board:
 			row_i += 1
 			col_i += 1
 
-	def __str__(self, adf=False):
+	def __str__(self, alignment=None):
+		alignment = alignment or []
 		res = ""
 
 		# put the column numbers
@@ -81,10 +85,13 @@ class Board:
 		res += '\t|\n'
 
 		# put the actual board
-		for row in self.state:
+		for y, row in enumerate(self.state):
 			res += '|'
-			for elem in row:
-				res += f"\t{elem}"
+			for x, elem in enumerate(row):
+				if (y, x) in alignment:
+					res += f"\t{Fore.RED}{elem}{Style.RESET_ALL}"
+				else:
+					res += f"\t{elem}"
 			res += f"\t|\n"
 
 		return res
@@ -117,9 +124,9 @@ class Game:
 		else:
 			self.switch_player()
 
-	def check_win(self, player: int) -> list[tuple]:
+	def get_4_in_row(self, player: int) -> list[tuple]:
 		"""
-		Check if a player has won the game
+		Check if a player has won the game and get the coordinates of the alignment
 		:param player: the player to analyze
 		:return: a list of tuples representing the aligned pieces
 		"""
@@ -146,10 +153,10 @@ class Game:
 			if (i := up_diag_s.find(to_find)) >= 0:
 				# get the starting coordinates for the alignment
 				if up_diag_i < Board.HEIGHT:
-					x, y = up_diag_i - i, i
+					y, x = up_diag_i - i, i
 				else:
-					x, y = Board.HEIGHT - i - 1, up_diag_i - Board.HEIGHT + i + 1
-				return [(x + j, y + j) for j in range(4)]
+					y, x = Board.HEIGHT - i - 1, up_diag_i - Board.HEIGHT + i + 1
+				return [(y - j, x + j) for j in range(4)]
 
 		# check the negative slope diags
 		for dn_diag_i in range(Board.HEIGHT + Board.WIDTH - 1):
@@ -157,10 +164,10 @@ class Game:
 			if (i := dn_diag_s.find(to_find)) >= 0:
 				# get the starting coordinates for the alignment
 				if dn_diag_i < Board.HEIGHT:
-					x, y = Board.HEIGHT - dn_diag_i + i - 1, i
+					y, x = Board.HEIGHT - dn_diag_i + i - 1, i
 				else:
-					x, y = i, dn_diag_i - Board.HEIGHT + i + 1
-				return [(x + j, y + j) for j in range(4)]
+					y, x = i, dn_diag_i - Board.HEIGHT + i + 1
+				return [(y + j, x + j) for j in range(4)]
 
 		return []
 
@@ -170,18 +177,19 @@ class Game:
 			if self.board.state[0][i] == self.board.EMPTY:
 				yield i
 
-	def __str__(self):
-		return str(self.board)
+	def __str__(self, *args, **kwargs):
+		return self.board.__str__(*args, **kwargs)
 
 
 if __name__ == '__main__':
 	def main():
 		g = Game()
 		print(g)
-		while True:
+		align = []
+		while not align:
 			c = int(input(f"Enter a column {list(g.get_valid_columns())}: "))
 			g.play(c)
-			print(g.check_win(0))
-			print(g)
+			align = g.get_4_in_row(player=0)
+			print(g.__str__(align))
 
 	main()
