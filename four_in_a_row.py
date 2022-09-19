@@ -117,21 +117,11 @@ class Game:
 		else:
 			self.switch_player()
 
-	def check_win(self, player: int) -> tuple[str, tuple[int, int]]:
+	def check_win(self, player: int) -> list[tuple]:
 		"""
 		Check if a player has won the game
-
-		the type of win (string)
-			* none (no win)
-			* row (win in a row)
-			* col (win in a column)
-			* ud (win in a positive slope diag)
-			* dd (win in a negative slope diag)
-		the coordinate (tuple) of the leftmost (if tied, upmost), element in the alignment
-			* (-1, -1) if no win
-
 		:param player: the player to analyze
-		:return: the tuple representing the state
+		:return: a list of tuples representing the aligned pieces
 		"""
 
 		# we need to find the symbol 4 times in a row
@@ -142,33 +132,37 @@ class Game:
 		for row_i in range(self.board.HEIGHT):
 			row_s = ''.join(self.board.row_gen(row_i))
 			if (col_i := row_s.find(to_find)) >= 0:
-				return 'row', (row_i, col_i)
+				return [(row_i, col_i + j) for j in range(4)]
 
 		# check columns
 		for col_i in range(self.board.WIDTH):
 			col_s = ''.join(self.board.col_gen(col_i))
 			if (row_i := col_s.find(to_find)) >= 0:
-				return 'col', (row_i, col_i)
+				return [(row_i + j, col_i) for j in range(4)]
 
 		# check the positive slope diags
 		for up_diag_i in range(Board.HEIGHT + Board.WIDTH - 1):
 			up_diag_s = ''.join(self.board.up_diag_gen(up_diag_i))
 			if (i := up_diag_s.find(to_find)) >= 0:
+				# get the starting coordinates for the alignment
 				if up_diag_i < Board.HEIGHT:
-					return 'ud', (up_diag_i - i, i)
+					x, y = up_diag_i - i, i
 				else:
-					return 'ud', (Board.HEIGHT - i - 1, up_diag_i - Board.HEIGHT + i + 1)
+					x, y = Board.HEIGHT - i - 1, up_diag_i - Board.HEIGHT + i + 1
+				return [(x + j, y + j) for j in range(4)]
 
 		# check the negative slope diags
 		for dn_diag_i in range(Board.HEIGHT + Board.WIDTH - 1):
 			dn_diag_s = ''.join(self.board.dn_diag_gen(dn_diag_i))
 			if (i := dn_diag_s.find(to_find)) >= 0:
+				# get the starting coordinates for the alignment
 				if dn_diag_i < Board.HEIGHT:
-					return 'dd', (Board.HEIGHT - dn_diag_i + i - 1, i)
+					x, y = Board.HEIGHT - dn_diag_i + i - 1, i
 				else:
-					return 'dd', (i, dn_diag_i - Board.HEIGHT + i + 1)
+					x, y = i, dn_diag_i - Board.HEIGHT + i + 1
+				return [(x + j, y + j) for j in range(4)]
 
-		return 'none', (-1, -1)
+		return []
 
 	# returns the non-empty columns
 	def get_valid_columns(self):
