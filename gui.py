@@ -2,6 +2,7 @@ from pygame.color import THECOLORS
 import pygame
 from pygame.locals import *
 from four_in_a_row import Game
+from fiar_min_max import FIARMinMax
 
 pygame.init()
 
@@ -65,6 +66,7 @@ def main():
 	pygame.display.set_caption('Unbeatable 4 in a row')
 
 	game = Game()
+	fiar_mm = FIARMinMax(game, plays=Game.PLAYERS[1])
 
 	running = True
 	while running:
@@ -81,13 +83,16 @@ def main():
 				if event.key == K_r:
 					game.__init__()
 				# column input
-				else:
-					num = int(event.unicode)
-					if num in range(NUM_COL) and not game.over:
-						game.play(num)
+				elif event.unicode in [str(i) for i in range(NUM_COL)] and not game.over:
+					col = int(event.unicode)
+					game.play(col)
 
 		draw_pieces(screen, game.board)
 		draw_grid(screen, NUM_ROW, NUM_COL)
+
+		if game.playing == fiar_mm.plays and not game.over:
+			col = fiar_mm.get_best_play()
+			game.play(col)
 
 		pygame.display.update()
 
