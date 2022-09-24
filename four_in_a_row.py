@@ -1,4 +1,5 @@
 from colorama import Fore, Style
+from enum import Enum, auto
 
 
 class Board:
@@ -100,10 +101,20 @@ class Board:
 class Game:
 	PLAYERS = ['#', '+']
 
+	class GameState(Enum):
+		IN_PROGRESS = auto()
+		TIE = auto()
+		P1_WON = auto()
+		P2_WON = auto()
+
 	def __init__(self, initial_board: Board = None):
 		# index of the player whose turn it is
 		self.p_i = 0
 		self.board = initial_board or Board()
+		if initial_board:
+			self._update_board_state()
+		else:
+			self._state = self.GameState.IN_PROGRESS
 
 	@property
 	def playing(self):
@@ -116,6 +127,25 @@ class Game:
 	def switch_player(self):
 		self.p_i = (self.p_i + 1) % 2
 
+	@property
+	def over(self):
+		return self.get_state() is not self.GameState.IN_PROGRESS
+
+	def get_state(self):
+		if not self._state:
+			self._update_board_state()
+		return self._state
+
+	def _update_board_state(self):
+		if self.get_4_in_row(0):
+			self._state = self.GameState.P1_WON
+		elif self.get_4_in_row(1):
+			self._state = self.GameState.P2_WON
+		elif not self.get_valid_columns():
+			self._state = self.GameState.TIE
+		else:
+			self._state = self.GameState.IN_PROGRESS
+
 	def play(self, column):
 		try:
 			self.board.insert_piece(column, self.playing)
@@ -123,6 +153,14 @@ class Game:
 			print("Error: ", e)
 		else:
 			self.switch_player()
+		self._update_board_state()
+
+		if self._state == self.GameState.P1_WON:
+			print('P1 won')
+		elif self._state == self.GameState.P2_WON:
+			print('P2 won')
+		elif self._state == self.GameState.TIE:
+			print('Tie')
 
 	def get_4_in_row(self, player: int) -> list[tuple]:
 		"""
@@ -191,5 +229,6 @@ if __name__ == '__main__':
 			g.play(c)
 			align = g.get_4_in_row(player=0)
 			print(g.__str__(align))
+
 
 	main()
