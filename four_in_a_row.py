@@ -136,6 +136,11 @@ class Game:
 			self._update_board_state()
 		return self._state
 
+	@staticmethod
+	def get_state_static(board):
+		temp = Game(initial_board=board)
+		return temp.get_state()
+
 	def _update_board_state(self):
 		if self.get_4_in_row(0):
 			self._state = self.GameState.P1_WON

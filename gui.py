@@ -39,11 +39,6 @@ def draw_grid(screen, n_rows, n_cols):
 		draw_horiz_line(screen, MARGIN_HEIGHT + (GRID_HEIGHT / n_rows) * i, min_x=MARGIN_WIDTH, max_x=W - MARGIN_WIDTH)
 
 
-def get_int_from_key(key):
-	# takes a pygame key input and returns the int associated iif the key is a number
-	print(key.to_bytes(10))
-
-
 def draw_piece(screen, row, col, color):
 	square_width = GRID_WIDTH / NUM_COL
 	square_height = GRID_HEIGHT / NUM_ROW
