@@ -8,7 +8,7 @@ class Board:
 	HEIGHT = 6
 	EMPTY = '.'
 
-	def __init__(self, *, initial_state=None):
+	def __init__(self, initial_state=None):
 		if initial_state:
 			self.state = initial_state
 		else:
@@ -16,6 +16,12 @@ class Board:
 
 	def reset(self, *, initial_state=None):
 		self.__init__(initial_state=initial_state)
+
+	def get_valid_columns(self):
+		"""Returns the indices of non-empty columns."""
+		for i in range(Board.WIDTH):
+			if self.state[0][i] == self.EMPTY:
+				yield i
 
 	def insert_piece(self, column, piece):
 		if column not in range(self.WIDTH):
@@ -33,16 +39,16 @@ class Board:
 				self.state[row][column] = piece
 				break
 
-	# returns a generator for the given row
 	def row_gen(self, row_i):
+		"""Returns a generator for the given row."""
 		return (self.state[row_i][i] for i in range(self.WIDTH))
 
-	# returns a generator for the given col
 	def col_gen(self, col_i):
+		"""Returns a generator for the given column."""
 		return (self.state[i][col_i] for i in range(self.HEIGHT))
 
-	# returns a generator for the given up diag (SW to NE)
 	def up_diag_gen(self, diag_i):
+		"""Returns a generator for the given up diag (SW to NE)."""
 		# if the diag starts on the first column
 		if diag_i < Board.HEIGHT:
 			row_i = diag_i
@@ -58,8 +64,8 @@ class Board:
 			row_i -= 1
 			col_i += 1
 
-	# returns a generator for the given down diag (NW to SE)
 	def dn_diag_gen(self, diag_i):
+		"""Returns a generator for the given down diag (NW to SE)."""
 		# if the diag starts on the first column
 		if diag_i < Board.HEIGHT:
 			row_i = Board.HEIGHT - diag_i - 1
@@ -74,6 +80,10 @@ class Board:
 			yield self.state[row_i][col_i]
 			row_i += 1
 			col_i += 1
+
+	def __copy__(self):
+		copied_state = [row.copy() for row in self.state]
+		return Board(copied_state)
 
 	def __str__(self, alignment=None):
 		alignment = alignment or []
@@ -107,9 +117,15 @@ class Game:
 		P1_WON = auto()
 		P2_WON = auto()
 
-	def __init__(self, initial_board: Board = None):
+	def __init__(self, initial_board: Board | list[list[str]] = None):
 		# index of the player whose turn it is
 		self.p_i = 0
+
+		# if the given board is a list, convert it to a board first
+		if isinstance(initial_board, list):
+			initial_board = Board(initial_board)
+
+		# if an initial board was given, set it and update the board state
 		self.board = initial_board or Board()
 		if initial_board:
 			self._update_board_state()
@@ -146,7 +162,7 @@ class Game:
 			self._state = self.GameState.P1_WON
 		elif self.get_4_in_row(1):
 			self._state = self.GameState.P2_WON
-		elif not self.get_valid_columns():
+		elif not self.board.get_valid_columns():
 			self._state = self.GameState.TIE
 		else:
 			self._state = self.GameState.IN_PROGRESS
@@ -214,12 +230,6 @@ class Game:
 
 		return []
 
-	# returns the non-empty columns
-	def get_valid_columns(self):
-		for i in range(Board.WIDTH):
-			if self.board.state[0][i] == self.board.EMPTY:
-				yield i
-
 	def __str__(self, *args, **kwargs):
 		return self.board.__str__(*args, **kwargs)
 
@@ -230,7 +240,7 @@ if __name__ == '__main__':
 		print(g)
 		align = []
 		while not align:
-			c = int(input(f"Enter a column {list(g.get_valid_columns())}: "))
+			c = int(input(f"Enter a column {list(g.board.get_valid_columns())}: "))
 			g.play(c)
 			align = g.get_4_in_row(player=0)
 			print(g.__str__(align))
