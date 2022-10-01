@@ -39,15 +39,15 @@ class Board:
 				self.state[row][column] = piece
 				break
 
-	def row_gen(self, row_i):
+	def gen_row(self, row_i):
 		"""Returns a generator for the given row."""
 		return (self.state[row_i][i] for i in range(self.WIDTH))
 
-	def col_gen(self, col_i):
+	def gen_col(self, col_i):
 		"""Returns a generator for the given column."""
 		return (self.state[i][col_i] for i in range(self.HEIGHT))
 
-	def up_diag_gen(self, diag_i):
+	def gen_up_diag(self, diag_i):
 		"""Returns a generator for the given up diag (SW to NE)."""
 		# if the diag starts on the first column
 		if diag_i < Board.HEIGHT:
@@ -64,7 +64,7 @@ class Board:
 			row_i -= 1
 			col_i += 1
 
-	def dn_diag_gen(self, diag_i):
+	def gen_dn_diag(self, diag_i):
 		"""Returns a generator for the given down diag (NW to SE)."""
 		# if the diag starts on the first column
 		if diag_i < Board.HEIGHT:
@@ -80,6 +80,18 @@ class Board:
 			yield self.state[row_i][col_i]
 			row_i += 1
 			col_i += 1
+
+	def gen_all_lines(self):
+		"""Simply utility that yields generators for all the lines."""
+
+		for i in range(self.HEIGHT):
+			yield self.gen_row(i)
+		for i in range(self.WIDTH):
+			yield self.gen_col(i)
+		for i in range(self.HEIGHT + self.WIDTH - 1):
+			yield self.gen_up_diag(i)
+		for i in range(self.HEIGHT + self.WIDTH - 1):
+			yield self.gen_dn_diag(i)
 
 	def __copy__(self):
 		copied_state = [row.copy() for row in self.state]
@@ -196,19 +208,19 @@ class Game:
 
 		# check rows
 		for row_i in range(self.board.HEIGHT):
-			row_s = ''.join(self.board.row_gen(row_i))
+			row_s = ''.join(self.board.gen_row(row_i))
 			if (col_i := row_s.find(to_find)) >= 0:
 				return [(row_i, col_i + j) for j in range(4)]
 
 		# check columns
 		for col_i in range(self.board.WIDTH):
-			col_s = ''.join(self.board.col_gen(col_i))
+			col_s = ''.join(self.board.gen_col(col_i))
 			if (row_i := col_s.find(to_find)) >= 0:
 				return [(row_i + j, col_i) for j in range(4)]
 
 		# check the positive slope diags
 		for up_diag_i in range(Board.HEIGHT + Board.WIDTH - 1):
-			up_diag_s = ''.join(self.board.up_diag_gen(up_diag_i))
+			up_diag_s = ''.join(self.board.gen_up_diag(up_diag_i))
 			if (i := up_diag_s.find(to_find)) >= 0:
 				# get the starting coordinates for the alignment
 				if up_diag_i < Board.HEIGHT:
@@ -219,7 +231,7 @@ class Game:
 
 		# check the negative slope diags
 		for dn_diag_i in range(Board.HEIGHT + Board.WIDTH - 1):
-			dn_diag_s = ''.join(self.board.dn_diag_gen(dn_diag_i))
+			dn_diag_s = ''.join(self.board.gen_dn_diag(dn_diag_i))
 			if (i := dn_diag_s.find(to_find)) >= 0:
 				# get the starting coordinates for the alignment
 				if dn_diag_i < Board.HEIGHT:
