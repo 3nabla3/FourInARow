@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Union
 
 from four_in_a_row import Board, Game
 
@@ -65,7 +64,7 @@ class MinMaxTree:
 		in a row, return 0"""
 
 		# if making a 4 in a row is impossible, return immediately
-		if len(line) < 4 or line.count('.') + line.count(Game.PLAYERS[player]) < 4:
+		if len(line) < 4 or line.count(Board.EMPTY) + line.count(Game.PLAYERS[player]) < 4:
 			return 0
 
 		# split the line on every opponent piece and treat each segment independently
@@ -112,6 +111,7 @@ class MinMaxTree:
 			# if the chain is in one piece, and we can extend it to 4
 			if pre + chain + post >= 4:
 				return chain
+		# if we cannot find a chain that can be extended to 4
 		return 0
 
 	def _score(self, player: int) -> int:
@@ -130,25 +130,23 @@ class MinMaxTree:
 
 if __name__ == '__main__':
 	def main():
-		# initial = [
-		# 	['.'] * 7,
-		# 	*[[Game.PLAYERS[(j // 2 + i) % 2] for j in range(7)] for i in range(6)]
-		# ]
-		# initial = [
-		# 	list('.' * 7),
-		# 	list('.' * 7),
-		# 	list('....+..'),
-		# 	list('...++#.'),
-		# 	list('.#.##+.'),
-		# 	list('+#+##+.')
-		# ]
-		# game = Game(initial_board=initial)
-		# print(game)
-		# fiar_mm = MinMaxTree(game.board, 0)
-		# fiar_mm.generate_tree(0)
-		# print(fiar_mm._score2(0))
-		# print(fiar_mm._score(0), fiar_mm._score(1))
-		score = MinMaxTree._analyze_line(list('.#.#.+.'), 0)
+		initial = [
+			['.'] * 7,
+			*[[Game.PLAYERS[(j // 2 + i) % 2] for j in range(7)] for i in range(6)]
+		]
+		initial = [
+			list(' ' * 7),
+			list(' ' * 7),
+			list('    +  '),
+			list('   ++# '),
+			list(' # ##+ '),
+			list('+#+##+ ')
+		]
+		game = Game(initial_board=initial)
+		print(game)
+		fiar_mm = MinMaxTree(game.board, 0)
+		fiar_mm.generate_tree(0)
+		score = fiar_mm.get_score()
 		print(f"{score = }")
 
 

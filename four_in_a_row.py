@@ -6,7 +6,7 @@ class Board:
 	"""A board is a 7 * 6 board of red, black or empty pieces"""
 	WIDTH = 7
 	HEIGHT = 6
-	EMPTY = '.'
+	EMPTY = ' '
 
 	def __init__(self, initial_state=None):
 		if initial_state:
