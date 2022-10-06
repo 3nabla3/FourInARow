@@ -59,9 +59,10 @@ def draw_pieces(screen, board):
 def main():
 	screen = pygame.display.set_mode((W, H))
 	pygame.display.set_caption('Unbeatable 4 in a row')
+	clock = pygame.time.Clock()
 
 	game = Game()
-	fiar_mm = FIARMinMax(game, plays=Game.PLAYERS[1])
+	fiar_mm = FIARMinMax(game, max_depth=1, plays=1)
 
 	running = True
 	while running:
@@ -85,11 +86,14 @@ def main():
 		draw_pieces(screen, game.board)
 		draw_grid(screen, NUM_ROW, NUM_COL)
 
-		if game.playing == fiar_mm.plays and not game.over:
+		algo_player_sym = Game.PLAYERS[fiar_mm.plays]
+		if game.playing == algo_player_sym and not game.over:
+			print("waiting for algo")
 			col = fiar_mm.get_best_play()
 			game.play(col)
 
 		pygame.display.update()
+		clock.tick(30)
 
 
 if __name__ == '__main__':

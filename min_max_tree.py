@@ -18,34 +18,34 @@ class MinMaxTree:
 	"""A tree is recursively defined as being a block of data (a node) along with
 	a list of trees (subtrees)."""
 
-	def __init__(self, board, playing, *, delta=None):
+	def __init__(self, board, playing: int, *, delta=None):
 		game_state = Game.get_state_static(board)
-		self._node = Node(board, game_state, delta, playing)
+		self.node = Node(board, game_state, delta, playing)
 
 		# the children will be generated later
 		# TODO: should it actually??
-		self.children = []
+		self.children: list[MinMaxTree] = []
 
 	def generate_tree(self, depth):
 		# exit condition of the recursion
 		if depth <= 0:
 			return
 
-		for col in self._node.board.get_valid_columns():
-			new_board = self._node.board.__copy__()
-			new_board.insert_piece(col, Game.PLAYERS[self._node.playing])
-			new_player = (self._node.playing + 1) % 2
+		for col in self.node.board.get_valid_columns():
+			new_board = self.node.board.__copy__()
+			new_board.insert_piece(col, Game.PLAYERS[self.node.playing])
+			new_player = (self.node.playing + 1) % 2
 			child = MinMaxTree(new_board, new_player, delta=col)
 			self.children.append(child)
 
 		for child in self.children:
-			child.genrate_tree(depth - 1)
+			child.generate_tree(depth - 1)
 
 	def get_score(self):
 		# if the score hasn't been calculated yet
-		if not self._node.score:
+		if not self.node.score:
 			self._calculate_score()
-		return self._node.score
+		return self.node.score
 
 	def _calculate_score(self):
 		# if the node is a leaf, perform a static evaluation
@@ -55,7 +55,7 @@ class MinMaxTree:
 	def _static_eval(self):
 		"""Let _score(p) be the length of the longest chain of player p that can still be expanded to 4.
 		The static score of a board is defined as _score(P1) - _score(P2)"""
-		self._node.score = self._score(0) - self._score(1)
+		self.node.score = self._score(0) - self._score(1)
 
 	@staticmethod
 	def _analyze_line(line: list, player) -> int:
@@ -120,7 +120,7 @@ class MinMaxTree:
 
 		longest_chain = 0
 		# find the longest chain in every line
-		for line in (list(gen) for gen in self._node.board.gen_all_lines()):
+		for line in (list(gen) for gen in self.node.board.gen_all_lines()):
 			chain_len = self._analyze_line(line, player)
 			if chain_len > longest_chain:
 				longest_chain = chain_len
