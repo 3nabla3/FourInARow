@@ -56,6 +56,9 @@ class MinMaxTree:
 			child.generate_tree(depth - 1)
 
 	def get_score(self):
+		# TODO: a node should be worth more the less steps it takes to reach it
+		#  this way, if the algo can win in 5 moves or 2 moves, it will chose 2 moves
+		#  similarly, if the algo can lose in 5 moves or 2 moves, it should chose 5
 		# if the score hasn't been calculated yet
 		if not self.node.score:
 			self._calculate_score()

@@ -8,6 +8,11 @@ class FIARMinMax:
 		self.plays = plays  # by default, the algo plays second
 		self.tree = None
 		self.max_depth = max_depth
+
+		# TODO: make a debug node with more debug options (useful for unit tests)
+		# the list of all options with the same score on the last move
+		# used for debugging when figuring out why the algo played a certain way
+		self.last_play_options: list[int] = []
 		self.verbose = verbose
 
 	def debug_print(self, *args, **kwargs):
@@ -54,6 +59,7 @@ class FIARMinMax:
 		# pick a random option out of the available ones
 		chosen = choice(best_children)
 		self.debug_print(f"Chose random out of {len(best_children)} options: {[c.node.delta for c in best_children]}")
+		self.last_play_options = [child.node.delta for child in best_children]
 
 		# adjust the tree after the move
 		self.tree = chosen
