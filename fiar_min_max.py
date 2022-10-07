@@ -3,11 +3,16 @@ from random import choice
 
 
 class FIARMinMax:
-	def __init__(self, game, *, max_depth=3, plays: int = 1):
+	def __init__(self, game, *, max_depth=3, plays: int = 1, verbose=False):
 		self.game = game
 		self.plays = plays  # by default, the algo plays second
 		self.tree = None
 		self.max_depth = max_depth
+		self.verbose = verbose
+
+	def debug_print(self, *args, **kwargs):
+		if self.verbose:
+			print(*args, **kwargs)
 
 	def _update_tree(self):
 		"""Makes sure the tree is at the right depth and all the children exist at each layer."""
@@ -15,11 +20,12 @@ class FIARMinMax:
 
 	def get_best_play(self):
 		if not self.tree:
-			print("Generating tree...")
+			self.debug_print("Generating tree...")
 			self.tree = MinMaxTree(self.game.board.__copy__(), playing=self.plays)
 			self._update_tree()
-			print("Done!")
+			self.debug_print("Done!")
 
+		self.debug_print("Calculating best move...")
 		# if the current board state is not the head of the tree, find the child that corresponds
 		if self.game.board != self.tree.node.board:
 			for child in self.tree.children:
@@ -47,7 +53,7 @@ class FIARMinMax:
 
 		# pick a random option out of the available ones
 		chosen = choice(best_children)
-		print(f"Chose random out of {len(best_children)} options: {[c.node.delta for c in best_children]}")
+		self.debug_print(f"Chose random out of {len(best_children)} options: {[c.node.delta for c in best_children]}")
 
 		# adjust the tree after the move
 		self.tree = chosen

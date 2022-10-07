@@ -141,7 +141,7 @@ class Game:
 		P1_WON = auto()
 		P2_WON = auto()
 
-	def __init__(self, initial_board: Board | list[list[str]] = None):
+	def __init__(self, initial_board: Board | list[list[str]] = None, *, verbose=False):
 		# index of the player whose turn it is
 		if initial_board:
 			p1_count = sum(row.count(Game.PLAYERS[0]) for row in initial_board)
@@ -164,6 +164,11 @@ class Game:
 			self._update_board_state()
 		else:
 			self._state = self.GameState.IN_PROGRESS
+		self.verbose = verbose
+
+	def debug_print(self, *args, **kwargs):
+		if self.verbose:
+			print(*args, **kwargs)
 
 	@property
 	def playing(self):
@@ -202,22 +207,22 @@ class Game:
 
 	def play(self, column):
 		if self.over:
-			print('Game is over!')
+			self.debug_print('Game is over!')
 			return
 		try:
 			self.board.insert_piece(column, self.playing)
 		except ValueError as e:
-			print("Error: ", e)
+			self.debug_print("Error: ", e)
 		else:
 			self.switch_player()
 		self._update_board_state()
 
 		if self._state == self.GameState.P1_WON:
-			print('P1 won')
+			self.debug_print('P1 won')
 		elif self._state == self.GameState.P2_WON:
-			print('P2 won')
+			self.debug_print('P2 won')
 		elif self._state == self.GameState.TIE:
-			print('Tie')
+			self.debug_print('Tie')
 
 		self.last_play = column
 
