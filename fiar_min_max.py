@@ -1,6 +1,7 @@
 from min_max_tree import MinMaxTree
 from random import choice
 
+
 class FIARMinMax:
 	def __init__(self, game, *, max_depth=3, plays: int = 1):
 		self.game = game
