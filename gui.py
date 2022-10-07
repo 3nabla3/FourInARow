@@ -1,6 +1,7 @@
-from pygame.color import THECOLORS
 import pygame
+from pygame.color import THECOLORS
 from pygame.locals import *
+
 from four_in_a_row import Game
 from fiar_min_max import FIARMinMax
 
@@ -56,13 +57,35 @@ def draw_pieces(screen, board):
 				draw_piece(screen, row_i, col_i, color)
 
 
+def get_column_from_coord(x: int) -> int | None:
+	"""Translate x coordinate from mouse click to a column on the board.
+	Returns None if the mouse was not on any column."""
+	if not MARGIN_WIDTH <= x <= W - MARGIN_WIDTH:
+		return None
+
+	# get the ratio of how far is it along the board
+	ratio = (x - MARGIN_WIDTH) / GRID_WIDTH
+
+	# convert that ratio to a column
+	col = int(ratio * NUM_COL)
+	return col
+
+
 def main():
 	screen = pygame.display.set_mode((W, H))
 	pygame.display.set_caption('Unbeatable 4 in a row')
 	clock = pygame.time.Clock()
 
-	game = Game()
-	fiar_mm = FIARMinMax(game, max_depth=1, plays=1)
+	initial = [
+		list('.......'),
+		list('.......'),
+		list('.......'),
+		list('.......'),
+		list('....#..'),
+		list('.##++.+'),
+	]
+	game = Game(initial_board=initial)
+	fiar_mm = FIARMinMax(game, max_depth=5, plays=0)
 
 	running = True
 	while running:
@@ -72,27 +95,29 @@ def main():
 			if event.type == QUIT:
 				running = False
 			elif event.type == MOUSEBUTTONDOWN:
-				# TODO: accept mouse input as well
-				pass
+				x, y = event.pos
+				col = get_column_from_coord(x)
+				if col is not None:
+					game.play(col)
 			elif event.type == KEYDOWN:
 				# reset
 				if event.key == K_r:
 					game.__init__()
 				# column input
-				elif event.unicode in [str(i) for i in range(NUM_COL)] and not game.over:
+				elif event.unicode in [str(i) for i in range(NUM_COL)]:
 					col = int(event.unicode)
 					game.play(col)
 
 		draw_pieces(screen, game.board)
 		draw_grid(screen, NUM_ROW, NUM_COL)
+		pygame.display.update()
 
 		algo_player_sym = Game.PLAYERS[fiar_mm.plays]
 		if game.playing == algo_player_sym and not game.over:
-			print("waiting for algo")
+			print("Waiting for algo")
 			col = fiar_mm.get_best_play()
 			game.play(col)
 
-		pygame.display.update()
 		clock.tick(30)
 
 

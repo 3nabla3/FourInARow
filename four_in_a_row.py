@@ -1,12 +1,13 @@
-from colorama import Fore, Style
 from enum import Enum, auto
+
+from colorama import Fore, Style
 
 
 class Board:
 	"""A board is a 7 * 6 board of red, black or empty pieces"""
 	WIDTH = 7
 	HEIGHT = 6
-	EMPTY = ' '
+	EMPTY = '.'
 
 	def __init__(self, initial_state=None):
 		if initial_state:
@@ -93,9 +94,20 @@ class Board:
 		for i in range(self.HEIGHT + self.WIDTH - 1):
 			yield self.gen_dn_diag(i)
 
+	def __iter__(self):
+		for row in self.state:
+			yield row
+
 	def __copy__(self):
 		copied_state = [row.copy() for row in self.state]
 		return Board(copied_state)
+
+	def __eq__(self, other):
+		assert len(self.state) == len(other.state)
+		for self_row, other_row in zip(self.state, other.state):
+			if self_row != other_row:
+				return False
+		return True
 
 	def __str__(self, alignment=None):
 		alignment = alignment or []
@@ -131,7 +143,16 @@ class Game:
 
 	def __init__(self, initial_board: Board | list[list[str]] = None):
 		# index of the player whose turn it is
-		self.p_i = 0
+		if initial_board:
+			p1_count = sum(row.count(Game.PLAYERS[0]) for row in initial_board)
+			p2_count = sum(row.count(Game.PLAYERS[1]) for row in initial_board)
+			self.p_i = 1 if p1_count > p2_count else 0
+		else:
+			self.p_i = 0
+
+		# column that was last played
+		# (used by the algo to figure out how to move around the tree)
+		self.last_play: int | None = None
 
 		# if the given board is a list, convert it to a board first
 		if isinstance(initial_board, list):
@@ -180,6 +201,9 @@ class Game:
 			self._state = self.GameState.IN_PROGRESS
 
 	def play(self, column):
+		if self.over:
+			print('Game is over!')
+			return
 		try:
 			self.board.insert_piece(column, self.playing)
 		except ValueError as e:
@@ -194,6 +218,8 @@ class Game:
 			print('P2 won')
 		elif self._state == self.GameState.TIE:
 			print('Tie')
+
+		self.last_play = column
 
 	def get_4_in_row(self, player: int) -> list[tuple]:
 		"""
