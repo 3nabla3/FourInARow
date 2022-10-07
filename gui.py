@@ -84,8 +84,8 @@ def main():
 		list('....#..'),
 		list('.##++.+'),
 	]
-	game = Game(initial_board=initial)
-	fiar_mm = FIARMinMax(game, max_depth=5, plays=0)
+	game = Game(initial_board=initial, verbose=True)
+	fiar_mm = FIARMinMax(game, max_depth=5, plays=0, verbose=True)
 
 	running = True
 	while running:
@@ -114,7 +114,6 @@ def main():
 
 		algo_player_sym = Game.PLAYERS[fiar_mm.plays]
 		if game.playing == algo_player_sym and not game.over:
-			print("Waiting for algo")
 			col = fiar_mm.get_best_play()
 			game.play(col)
 
