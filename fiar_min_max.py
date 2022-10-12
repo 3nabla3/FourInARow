@@ -58,7 +58,8 @@ class FIARMinMax:
 
 		# pick a random option out of the available ones
 		chosen = choice(best_children)
-		self.debug_print(f"Chose random out of {len(best_children)} options: {[c.node.delta for c in best_children]}")
+		self.debug_print(f"Chose random out of {len(best_children)} options (Score: {best_score}):"
+		                 f" {[c.node.delta for c in best_children]}")
 		self.last_play_options = [child.node.delta for child in best_children]
 
 		# adjust the tree after the move

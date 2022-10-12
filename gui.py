@@ -49,12 +49,17 @@ def draw_piece(screen, row, col, color):
 	pygame.draw.circle(screen, THECOLORS[color], (x, y), 20)
 
 
-def draw_pieces(screen, board):
+def draw_pieces(screen, board, alignment):
 	for row_i, row in enumerate(board.state):
 		for col_i, elem in enumerate(row):
-			if elem in Game.PLAYERS:
-				color = 'red' if elem == Game.PLAYERS[0] else 'blue'
-				draw_piece(screen, row_i, col_i, color)
+			if elem == board.EMPTY:
+				continue
+			if elem == Game.PLAYERS[0]:
+				color = 'red' if (row_i, col_i) in alignment else 'darkred'
+			# if elem == Game.Players[1]
+			else:
+				color = 'blue' if (row_i, col_i) in alignment else 'darkblue'
+			draw_piece(screen, row_i, col_i, color)
 
 
 def get_column_from_coord(x: int) -> int | None:
@@ -77,15 +82,15 @@ def main():
 	clock = pygame.time.Clock()
 
 	initial = [
-		list('.......'),
-		list('.......'),
-		list('.......'),
-		list('.......'),
-		list('....#..'),
-		list('.##++.+'),
+		list('##++#..'),
+		list('++##++#'),
+		list('##++##+'),
+		list('++##++#'),
+		list('##++##+'),
+		list('++##++#'),
 	]
-	game = Game(initial_board=initial, verbose=True)
-	fiar_mm = FIARMinMax(game, max_depth=5, plays=0, verbose=True)
+	game = Game(verbose=True)
+	fiar_mm = FIARMinMax(game, max_depth=7, plays=1, verbose=True)
 
 	running = True
 	while running:
@@ -108,7 +113,7 @@ def main():
 					col = int(event.unicode)
 					game.play(col)
 
-		draw_pieces(screen, game.board)
+		draw_pieces(screen, game.board, game.alignment)
 		draw_grid(screen, NUM_ROW, NUM_COL)
 		pygame.display.update()
 

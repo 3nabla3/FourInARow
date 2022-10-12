@@ -25,6 +25,9 @@ class MinMaxTree:
 	def __init__(self, board, playing: int, *, delta=None):
 		game_state = Game.get_state_static(board)
 		self.node = Node(board, game_state, delta, playing)
+		# used to make more distant results less valuable than closer ones.
+		# this forces the algo to win in the fastest way possible and lose in the longest way
+		self.damping_factor = 0.9
 
 		# the children will be generated later
 		# TODO: should it actually??
@@ -83,7 +86,9 @@ class MinMaxTree:
 		# if it does have children, perform a dynamic evaluation
 		func = max if self.node.maximizing else min
 		# if maximizing, the score is the max score of children, opposite if minimizing
-		self.node.score = func(self.children, key=lambda child: child.get_score()).get_score()
+		best_score = func(self.children, key=lambda child: child.get_score()).get_score()
+		# apply a damping factor to make distant results seem less valuable than closer ones
+		self.node.score = best_score * self.damping_factor
 
 	def _static_eval(self):
 		"""Let _score(p) be the length of the longest chain of player p that can still be expanded to 4.

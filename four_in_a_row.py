@@ -164,6 +164,8 @@ class Game:
 			self._update_board_state()
 		else:
 			self._state = self.GameState.IN_PROGRESS
+		# the coordinate of the 4 pieces in a row (used for graphics)
+		self.alignment = []
 		self.verbose = verbose
 
 	def debug_print(self, *args, **kwargs):
@@ -196,14 +198,16 @@ class Game:
 		return temp.get_state()
 
 	def _update_board_state(self):
-		if self.get_4_in_row(0):
+		if alignment := self.get_4_in_row(0):
 			self._state = self.GameState.P1_WON
-		elif self.get_4_in_row(1):
+		elif alignment := self.get_4_in_row(1):
 			self._state = self.GameState.P2_WON
-		elif not self.board.get_valid_columns():
+		elif not any(self.board.get_valid_columns()):
 			self._state = self.GameState.TIE
 		else:
 			self._state = self.GameState.IN_PROGRESS
+
+		self.alignment = alignment or []
 
 	def play(self, column):
 		if self.over:
