@@ -101,13 +101,13 @@ def main():
 	initial = [
 		list('.......'),
 		list('.......'),
-		list('.#..+..'),
-		list('.+.+#..'),
-		list('.+###..'),
-		list('.++###+'),
+		list('.......'),
+		list('.......'),
+		list('..+#...'),
+		list('..+#+#.'),
 	]
-	game = Game(initial, verbose=True)
-	fiar_mm = FIARMinMax(game, max_depth=5, plays=1, verbose=True)
+	game = Game(verbose=True)
+	fiar_mm = FIARMinMax(game, max_depth=6, plays=0, verbose=True, mt=False)
 
 	running = True
 	while running:

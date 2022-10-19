@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from multiprocessing import Pool
 
 from four_in_a_row import Board, Game
 
@@ -37,6 +38,14 @@ class MinMaxTree:
 
 	def child_already_exists(self, col):
 		return any(filter(lambda child: child.node.delta == col, self.children))
+
+	@staticmethod
+	def worker_mt(args):
+		c, d = args  # child and depth
+		c.generate_tree(d)
+
+	def generate_tree_mt(self, depth):
+		pass
 
 	def generate_tree(self, depth):
 		"""Makes sure the tree is the right depth,
@@ -77,28 +86,20 @@ class MinMaxTree:
 			return self._static_eval()
 
 		# TODO: find a way to arrange children by order of likeliness to be good
-		# TODO: factorize this shit
-		# if not perform a dynamic evaluation
-		elif self.node.maximizing:
-			best_val = -float('inf')
-			for child in self.children:
-				value = child.minimax(alpha, beta)
-				best_val = max(best_val, value)
-				alpha = max(alpha, best_val)
-				if beta <= alpha:
-					break
-			score = best_val
-		else:
-			best_val = float('inf')
-			for child in self.children:
-				value = child.minimax(alpha, beta)
-				best_val = min(best_val, value)
-				beta = min(beta, best_val)
-				if beta <= alpha:
-					break
-			score = best_val
 
-		return score * self.damping_factor
+		# if not perform a dynamic evaluation
+		better, worse = (max, min) if self.node.maximizing else (min, max)
+
+		best_val = worse(-float('inf'), float('inf'))
+		for child in self.children:
+			value = child.minimax(alpha, beta)
+			child.node.score = value
+			best_val = better(best_val, value)
+			alpha = better(alpha, best_val)
+			if beta <= alpha:
+				break
+
+		return best_val * self.damping_factor
 
 	def _static_eval(self) -> int:
 		"""Let _score(p) be the length of the longest chain of player p that can still be expanded to 4.

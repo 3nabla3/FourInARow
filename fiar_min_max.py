@@ -1,13 +1,16 @@
+import time
+
 from min_max_tree import MinMaxTree
 from random import choice
 
 
 class FIARMinMax:
-	def __init__(self, game, *, max_depth=3, plays: int = 1, verbose=False):
+	def __init__(self, game, *, max_depth=3, plays: int = 1, verbose=False, mt=False):
 		self.game = game
 		self.plays = plays  # by default, the algo plays second
 		self.tree = None
 		self.max_depth = max_depth
+		self.mt = mt  # multithreaded processing
 
 		# TODO: make a debug node with more debug options (useful for unit tests)
 		# the list of all options with the same score on the last move
@@ -21,7 +24,16 @@ class FIARMinMax:
 
 	def _update_tree(self):
 		"""Makes sure the tree is at the right depth and all the children exist at each layer."""
-		self.tree.generate_tree(self.max_depth)
+		start_time = time.perf_counter()
+
+		if self.mt:
+			raise NotImplementedError("no multithreading yet :(")
+		else:
+			self.tree.generate_tree(self.max_depth)
+
+		self.debug_print(f"Updating {'(mt)' if self.mt else ''} tree with depth {self.max_depth} "
+		                 f"took {time.perf_counter() - start_time:.3f}s")
+		pass
 
 	def get_best_play(self):
 		if not self.tree:
