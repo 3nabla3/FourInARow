@@ -11,6 +11,7 @@ class Node:
 	delta: int  # the move that resulted in the current board
 	playing: int  # who's turn is it to play
 	score: int | None = None  # the minmax score associated with the board
+	alpha = beta = None  # these will get initiated when calculating the score
 
 	@property
 	def maximizing(self):
@@ -25,6 +26,7 @@ class MinMaxTree:
 	def __init__(self, board, playing: int, *, delta=None):
 		game_state = Game.get_state_static(board)
 		self.node = Node(board, game_state, delta, playing)
+
 		# used to make more distant results less valuable than closer ones.
 		# this forces the algo to win in the fastest way possible and lose in the longest way
 		self.damping_factor = 0.9
@@ -59,9 +61,6 @@ class MinMaxTree:
 			child.generate_tree(depth - 1)
 
 	def get_score(self):
-		# TODO: a node should be worth more the less steps it takes to reach it
-		#  this way, if the algo can win in 5 moves or 2 moves, it will chose 2 moves
-		#  similarly, if the algo can lose in 5 moves or 2 moves, it should chose 5
 		# if the score hasn't been calculated yet
 		if not self.node.score:
 			self._calculate_score()
@@ -83,12 +82,34 @@ class MinMaxTree:
 			self._dynamic_eval()
 
 	def _dynamic_eval(self):
-		# if it does have children, perform a dynamic evaluation
-		func = max if self.node.maximizing else min
-		# if maximizing, the score is the max score of children, opposite if minimizing
-		best_score = func(self.children, key=lambda child: child.get_score()).get_score()
+		if self.node.maximizing:
+			best_val = -float('inf')
+			for child in self.children:
+				child.node.alpha = self.node.alpha
+				child.node.beta = self.node.beta
+				score = child.get_score()
+				best_val = max(best_val, score)
+				self.node.alpha = max(self.node.alpha, best_val)
+				if self.node.beta <= self.node.alpha:
+					break
+		else:
+			best_val = float('inf')
+			for child in self.children:
+				child.node.alpha = self.node.alpha
+				child.node.beta = self.node.beta
+				score = child.get_score()
+				best_val = min(best_val, score)
+				self.node.beta = min(self.node.beta, best_val)
+				if self.node.beta <= self.node.alpha:
+					break
+
+		# # if it does have children, perform a dynamic evaluation
+		# best = max if self.node.maximizing else min
+		# # if maximizing, the score is the max score of children, opposite if minimizing
+		# best_val = best(self.children, key=lambda child: child.get_score()).get_score()
+
 		# apply a damping factor to make distant results seem less valuable than closer ones
-		self.node.score = best_score * self.damping_factor
+		self.node.score = best_val * self.damping_factor
 
 	def _static_eval(self):
 		"""Let _score(p) be the length of the longest chain of player p that can still be expanded to 4.
@@ -97,7 +118,7 @@ class MinMaxTree:
 
 	@staticmethod
 	def _analyze_line(line: list, player) -> int:
-		"""Returns 4 - (the minimum number of pieces the player has to add to the line
+		"""Return 4 - (the minimum number of pieces the player has to add to the line
 		in order to get a 4 in a row on that line). If there is not enough space to get a 4
 		in a row, return 0"""
 
@@ -109,7 +130,6 @@ class MinMaxTree:
 		other_player = Game.PLAYERS[(player + 1) % 2]
 		if line.count(other_player):
 			segments = [list(seg) for seg in "".join(line).split(other_player)]
-			# print(f"split {line} in {segments}")
 			results = [MinMaxTree._analyze_line(seg, player) for seg in segments]
 			return max(results)
 
@@ -153,17 +173,13 @@ class MinMaxTree:
 		return 0
 
 	def _score(self, player: int) -> int:
-		"""Calculates the score (how good their situation is) of a given player.
-		Used in the static evaluation of the board"""
+		"""Calculate the score (how good their situation is) of a given player.
+		Used in the static evaluation of the board.
+		Return the length of the longest chain in the board for the given player.
+		"""
 
-		longest_chain = 0
-		# find the longest chain in every line
-		for line in (list(gen) for gen in self.node.board.gen_all_lines()):
-			chain_len = self._analyze_line(line, player)
-			if chain_len > longest_chain:
-				longest_chain = chain_len
-
-		return longest_chain
+		chain_lengths = (self._analyze_line(list(line), player) for line in self.node.board.gen_all_lines())
+		return max(chain_lengths)
 
 	def __repr__(self):
 		return f"Score: {self.get_score()}"

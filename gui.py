@@ -82,15 +82,15 @@ def main():
 	clock = pygame.time.Clock()
 
 	initial = [
-		list('##++#..'),
-		list('++##++#'),
-		list('##++##+'),
-		list('++##++#'),
-		list('##++##+'),
-		list('++##++#'),
+		list('.......'),
+		list('.......'),
+		list('......+'),
+		list('......#'),
+		list('.++..##'),
+		list('+#+##+#'),
 	]
 	game = Game(verbose=True)
-	fiar_mm = FIARMinMax(game, max_depth=7, plays=1, verbose=True)
+	fiar_mm = FIARMinMax(game, max_depth=5, plays=1, verbose=True)
 
 	running = True
 	while running:

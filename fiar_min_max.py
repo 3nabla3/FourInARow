@@ -40,13 +40,14 @@ class FIARMinMax:
 					break
 
 		# kinda hacky and against best practice, but it's readable and gets the work done
-		better = max if self.tree.node.maximizing else min
-		worse = min if self.tree.node.maximizing else max
+		better, worse = (max, min) if self.tree.node.maximizing else (min, max)
 
 		# get a list of the best options (the children in the list are tied)
 		best_children = []
 		best_score = worse((-5, 5))
 		for child in self.tree.children:
+			child.node.alpha = -float('inf') if child.node.maximizing else float('inf')
+			child.node.beta = float('inf') if child.node.maximizing else -float('inf')
 			score = child.get_score()
 			if score == best_score:
 				best_children.append(child)
