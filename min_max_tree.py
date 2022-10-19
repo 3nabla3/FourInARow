@@ -42,9 +42,12 @@ class MinMaxTree:
 		"""Makes sure the tree is the right depth,
 		needs to be called every time the tree is moved to one of its children."""
 
-		# exit condition of the recursion
-		if depth <= 0:
+		# if the tree is already deep enough or the node is a leaf
+		if depth <= 0 or self.node.game_state is not Game.GameState.IN_PROGRESS:
 			return
+
+		# reset the score so it gets recalculated
+		self.node.score = None
 
 		# make sure every direct child exists
 		for col in self.node.board.get_valid_columns():
@@ -56,65 +59,59 @@ class MinMaxTree:
 			child = MinMaxTree(new_board, new_player, delta=col)
 			self.children.append(child)
 
+		# call the method recursively for every child
 		for child in self.children:
-			child.node.score = None  # reset the scores so they get recalculated
 			child.generate_tree(depth - 1)
 
 	def get_score(self):
 		# if the score hasn't been calculated yet
-		if not self.node.score:
-			self._calculate_score()
+		if self.node.score is None:
+			self.node.score = self.minimax(alpha=-float('inf'), beta=float('inf'))
 		return self.node.score
 
-	def _calculate_score(self):
-		# if the state is decisive, the score is obvious
-		if self.node.game_state is Game.GameState.P1_WON:
-			self.node.score = 5
-		elif self.node.game_state is Game.GameState.P2_WON:
-			self.node.score = -5
-		elif self.node.game_state is Game.GameState.TIE:
-			self.node.score = 0
-		# if the node is a leaf, perform a static evaluation
-		elif not self.children:
-			self._static_eval()
-		# in the worse case, perform a dynamic evaluation
-		else:
-			self._dynamic_eval()
+	def minimax(self, alpha, beta) -> float:
+		"""https://www.geeksforgeeks.org/minimax-algorithm-in-game-theory-set-4-alpha-beta-pruning/."""
 
-	def _dynamic_eval(self):
-		if self.node.maximizing:
+		# if the node is a leaf, perform a static evaluation
+		if not self.children:
+			return self._static_eval()
+
+		# TODO: find a way to arrange children by order of likeliness to be good
+		# TODO: factorize this shit
+		# if not perform a dynamic evaluation
+		elif self.node.maximizing:
 			best_val = -float('inf')
 			for child in self.children:
-				child.node.alpha = self.node.alpha
-				child.node.beta = self.node.beta
-				score = child.get_score()
-				best_val = max(best_val, score)
-				self.node.alpha = max(self.node.alpha, best_val)
-				if self.node.beta <= self.node.alpha:
+				value = child.minimax(alpha, beta)
+				best_val = max(best_val, value)
+				alpha = max(alpha, best_val)
+				if beta <= alpha:
 					break
+			score = best_val
 		else:
 			best_val = float('inf')
 			for child in self.children:
-				child.node.alpha = self.node.alpha
-				child.node.beta = self.node.beta
-				score = child.get_score()
-				best_val = min(best_val, score)
-				self.node.beta = min(self.node.beta, best_val)
-				if self.node.beta <= self.node.alpha:
+				value = child.minimax(alpha, beta)
+				best_val = min(best_val, value)
+				beta = min(beta, best_val)
+				if beta <= alpha:
 					break
+			score = best_val
 
-		# # if it does have children, perform a dynamic evaluation
-		# best = max if self.node.maximizing else min
-		# # if maximizing, the score is the max score of children, opposite if minimizing
-		# best_val = best(self.children, key=lambda child: child.get_score()).get_score()
+		return score * self.damping_factor
 
-		# apply a damping factor to make distant results seem less valuable than closer ones
-		self.node.score = best_val * self.damping_factor
-
-	def _static_eval(self):
+	def _static_eval(self) -> int:
 		"""Let _score(p) be the length of the longest chain of player p that can still be expanded to 4.
 		The static score of a board is defined as _score(P1) - _score(P2)."""
-		self.node.score = self._score(0) - self._score(1)
+		# if the state is decisive, the score is obvious
+		if self.node.game_state is Game.GameState.P1_WON:
+			return 5
+		elif self.node.game_state is Game.GameState.P2_WON:
+			return -5
+		elif self.node.game_state is Game.GameState.TIE:
+			return 0
+		# otherwise calculate the score with the proposed algo
+		return self._score(0) - self._score(1)
 
 	@staticmethod
 	def _analyze_line(line: list, player) -> int:
@@ -182,15 +179,13 @@ class MinMaxTree:
 		return max(chain_lengths)
 
 	def __repr__(self):
-		return f"Score: {self.get_score()}"
+		if self.node.score is not None:
+			return f"{'max' if self.node.maximizing else 'min'} score: {self.node.score}"
+		return "Branch pruned out"
 
 
 if __name__ == '__main__':
 	def main():
-		# initial = [
-		# 	['.'] * 7,
-		# 	*[[Game.PLAYERS[(j // 2 + i) % 2] for j in range(7)] for i in range(6)]
-		# ]
 		initial = [
 			list(' ' * 7),
 			list(' ' * 7),

@@ -28,7 +28,6 @@ class FIARMinMax:
 			self.debug_print("Generating tree...")
 			self.tree = MinMaxTree(self.game.board.__copy__(), playing=self.plays)
 			self._update_tree()
-			self.debug_print("Done!")
 
 		self.debug_print("Calculating best move...")
 		# if the current board state is not the head of the tree, find the child that corresponds
@@ -46,8 +45,6 @@ class FIARMinMax:
 		best_children = []
 		best_score = worse((-5, 5))
 		for child in self.tree.children:
-			child.node.alpha = -float('inf') if child.node.maximizing else float('inf')
-			child.node.beta = float('inf') if child.node.maximizing else -float('inf')
 			score = child.get_score()
 			if score == best_score:
 				best_children.append(child)
@@ -59,12 +56,15 @@ class FIARMinMax:
 
 		# pick a random option out of the available ones
 		chosen = choice(best_children)
-		self.debug_print(f"Chose random out of {len(best_children)} options (Score: {best_score}):"
+		self.debug_print(f"Chose random out of {len(best_children)} options (Score: {best_score:.2f}):"
 		                 f" {[c.node.delta for c in best_children]}")
 		self.last_play_options = [child.node.delta for child in best_children]
 
 		# adjust the tree after the move
 		self.tree = chosen
+
+		self.debug_print("Updating the tree...")
 		self._update_tree()
+		self.debug_print("Your turn!")
 
 		return chosen.node.delta

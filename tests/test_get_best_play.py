@@ -46,6 +46,19 @@ def test_block_when_possible():
 	assert fiar_mm.get_best_play() == 4
 	assert fiar_mm.last_play_options == [4]
 
+	initial = [
+		list('.......'),
+		list('.......'),
+		list('..+#...'),
+		list('..++...'),
+		list('..#+...'),
+		list('.#+##+#'),
+	]
+	game = Game(initial_board=initial)
+	fiar_mm = FIARMinMax(game, max_depth=5, plays=0)
+	assert fiar_mm.get_best_play() == 4
+	assert fiar_mm.last_play_options == [4]
+
 
 def test_play_smart():
 	# make sure algo plays in a spot where win is assured

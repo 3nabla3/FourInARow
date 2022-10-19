@@ -22,6 +22,11 @@ VERT_MARGIN = 0.03
 GRID_HEIGHT = H * (1 - VERT_MARGIN * 2)
 MARGIN_HEIGHT = H * VERT_MARGIN
 
+P0_COL = 'darkred'
+P0_SPEC_COL = 'red'
+P1_COL = 'darkblue'
+P1_SPEC_COL = 'blue'
+
 
 def draw_vert_line(screen, x, min_y, max_y):
 	pygame.draw.line(screen, THECOLORS['turquoise'], (x, min_y), (x, max_y))
@@ -49,16 +54,28 @@ def draw_piece(screen, row, col, color):
 	pygame.draw.circle(screen, THECOLORS[color], (x, y), 20)
 
 
-def draw_pieces(screen, board, alignment):
+def top_of_col(board, coord, col) -> bool:
+	"""Return true if the last piece played on the column is at coord."""
+	p_row, p_col = coord
+	if p_col != col:
+		return False
+	if p_row == 0:
+		return True
+	return board.state[p_row - 1][col] == board.EMPTY
+
+
+def draw_pieces(screen, board, alignment, last_play_col):
 	for row_i, row in enumerate(board.state):
 		for col_i, elem in enumerate(row):
 			if elem == board.EMPTY:
 				continue
+			coord = row_i, col_i
+			special = coord in alignment or top_of_col(board, coord, last_play_col)
+
 			if elem == Game.PLAYERS[0]:
-				color = 'red' if (row_i, col_i) in alignment else 'darkred'
-			# if elem == Game.Players[1]
+				color = P0_SPEC_COL if special else P0_COL
 			else:
-				color = 'blue' if (row_i, col_i) in alignment else 'darkblue'
+				color = P1_SPEC_COL if special else P1_COL
 			draw_piece(screen, row_i, col_i, color)
 
 
@@ -84,12 +101,12 @@ def main():
 	initial = [
 		list('.......'),
 		list('.......'),
-		list('......+'),
-		list('......#'),
-		list('.++..##'),
-		list('+#+##+#'),
+		list('.#..+..'),
+		list('.+.+#..'),
+		list('.+###..'),
+		list('.++###+'),
 	]
-	game = Game(verbose=True)
+	game = Game(initial, verbose=True)
 	fiar_mm = FIARMinMax(game, max_depth=5, plays=1, verbose=True)
 
 	running = True
@@ -113,7 +130,7 @@ def main():
 					col = int(event.unicode)
 					game.play(col)
 
-		draw_pieces(screen, game.board, game.alignment)
+		draw_pieces(screen, game.board, game.alignment, game.last_play)
 		draw_grid(screen, NUM_ROW, NUM_COL)
 		pygame.display.update()
 
