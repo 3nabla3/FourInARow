@@ -1,4 +1,5 @@
 import time
+from multiprocessing import Pool
 
 from min_max_tree import MinMaxTree
 from random import choice
@@ -26,14 +27,30 @@ class FIARMinMax:
 		"""Makes sure the tree is at the right depth and all the children exist at each layer."""
 		start_time = time.perf_counter()
 
-		if self.mt:
-			raise NotImplementedError("no multithreading yet :(")
-		else:
-			self.tree.generate_tree(self.max_depth)
+		# TODO: implement a multithread tree generation
+		# if self.mt and False:
+		# 	# self.tree.generate_tree_mt(self.max_depth)
+		# 	raise NotImplementedError("no multithreading yet :(")
+		# else:
+		self.tree.generate_tree(self.max_depth)
 
-		self.debug_print(f"Updating {'(mt)' if self.mt else ''} tree with depth {self.max_depth} "
-		                 f"took {time.perf_counter() - start_time:.3f}s")
+		self.debug_print(
+			f"Updating {'(mt) ' if self.mt else ''}tree with depth {self.max_depth} "
+			f"took {time.perf_counter() - start_time:.3f}s")
 		pass
+
+	@staticmethod
+	def worker(child):
+		return child.get_score(), child
+
+	def get_children_scores(self, mt) -> list[tuple[float, MinMaxTree]]:
+		"""Return the list of scores of the immediate children."""
+		if mt:
+			with Pool() as pool:
+				scores = pool.map(self.worker, [child for child in self.tree.children])
+		else:
+			scores = [(child.get_score(), child) for child in self.tree.children]
+		return scores
 
 	def get_best_play(self):
 		if not self.tree:
@@ -56,20 +73,22 @@ class FIARMinMax:
 		# get a list of the best options (the children in the list are tied)
 		best_children = []
 		best_score = worse((-5, 5))
-		for child in self.tree.children:
-			score = child.get_score()
+
+		# get the scores and pick the best ones
+		scores = self.get_children_scores(self.mt)
+		for score, child in scores:
 			if score == best_score:
 				best_children.append(child)
 
-			# if the child is better than any previous
-			elif better((best_score, score)) == score:
+			elif better(score, best_score) == score:
 				best_children = [child]
 				best_score = score
 
 		# pick a random option out of the available ones
 		chosen = choice(best_children)
-		self.debug_print(f"Chose random out of {len(best_children)} options (Score: {best_score:.2f}):"
-		                 f" {[c.node.delta for c in best_children]}")
+		self.debug_print(
+			f"Chose random out of {len(best_children)} options (Score: {best_score:.2f}):"
+			f" {[c.node.delta for c in best_children]}")
 		self.last_play_options = [child.node.delta for child in best_children]
 
 		# adjust the tree after the move

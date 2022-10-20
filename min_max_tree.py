@@ -1,6 +1,4 @@
 from dataclasses import dataclass
-from multiprocessing import Pool
-
 from four_in_a_row import Board, Game
 
 
@@ -43,9 +41,6 @@ class MinMaxTree:
 	def worker_mt(args):
 		c, d = args  # child and depth
 		c.generate_tree(d)
-
-	def generate_tree_mt(self, depth):
-		pass
 
 	def generate_tree(self, depth):
 		"""Makes sure the tree is the right depth,
