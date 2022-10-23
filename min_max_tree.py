@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 from four_in_a_row import Board, Game
 
 
@@ -36,11 +37,6 @@ class MinMaxTree:
 
 	def child_already_exists(self, col):
 		return any(filter(lambda child: child.node.delta == col, self.children))
-
-	@staticmethod
-	def worker_mt(args):
-		c, d = args  # child and depth
-		c.generate_tree(d)
 
 	def generate_tree(self, depth):
 		"""Makes sure the tree is the right depth,
@@ -83,14 +79,21 @@ class MinMaxTree:
 		# TODO: find a way to arrange children by order of likeliness to be good
 
 		# if not perform a dynamic evaluation
-		better, worse = (max, min) if self.node.maximizing else (min, max)
+		best, worse = (max, min) if self.node.maximizing else (min, max)
 
 		best_val = worse(-float('inf'), float('inf'))
 		for child in self.children:
 			value = child.minimax(alpha, beta)
 			child.node.score = value
-			best_val = better(best_val, value)
-			alpha = better(alpha, best_val)
+
+			best_val = best(best_val, value)
+			# if maximizing, update alpha
+			if self.node.maximizing:
+				alpha = best(alpha, best_val)
+			# if not, update the beta
+			else:
+				beta = best(beta, best_val)
+			# check if we can prune the branch
 			if beta <= alpha:
 				break
 
@@ -107,7 +110,7 @@ class MinMaxTree:
 		elif self.node.game_state is Game.GameState.TIE:
 			return 0
 		# otherwise calculate the score with the proposed algo
-		return self._score(0) - self._score(1)
+		return self._score(player=0) - self._score(player=1)
 
 	@staticmethod
 	def _analyze_line(line: list, player) -> int:
@@ -121,49 +124,46 @@ class MinMaxTree:
 
 		# split the line on every opponent piece and treat each segment independently
 		other_player = Game.PLAYERS[(player + 1) % 2]
-		if line.count(other_player):
+		if line.count(other_player):  # if the line can be split
 			segments = [list(seg) for seg in "".join(line).split(other_player)]
-			results = [MinMaxTree._analyze_line(seg, player) for seg in segments]
+			results = (MinMaxTree._analyze_line(seg, player) for seg in segments)
 			return max(results)
 
-		pre = 0
-		chain = 0
-		inner = []  # the number of inner empty spaces between two chains
-		post = 0
-		for elem in line:
-			# deal with the empty spots first
-			if elem == Board.EMPTY:
-				# if we are still before the chain
-				if chain == 0:
-					pre += 1
-				# if we are after the chain
-				else:
-					post += 1
-				continue
+		# at this point, the line only contains empty or player pieces, and it is possible to get a line of 4
+		counts = []
 
-			# if we are still following the chain
-			if post == 0:
-				chain += 1
-			# if we are hitting another chain
-			else:
-				chain += 1
-				inner.append(post)
-				post = 0
+		left = 4  # how many slots left before it is not possible to make a 4 in a row
+		count = 0  # how long the chain is
+		started: None | int = None  # index of where the chain starts, None if it didn't start yet
 
-		# if the chain is split in two
-		if inner:
-			# if we don't need to extend to the sides
-			if chain + sum(inner) >= 4:
-				return 4 - sum(inner)
-			# if we do
-			if pre + chain + sum(inner) + post >= 4:
-				return chain
-		else:
-			# if the chain is in one piece, and we can extend it to 4
-			if pre + chain + post >= 4:
-				return chain
-		# if we cannot find a chain that can be extended to 4
-		return 0
+		# loop over every piece of the line
+		i = 0
+		while i < len(line):
+			sym = line[i]
+			if started is None:
+				# start the chain
+				if sym == Game.PLAYERS[player]:
+					started = i
+			if started:
+				if sym == Game.PLAYERS[player]:
+					# add one piece to the chain
+					left -= 1
+					count += 1
+				else:  # if empty
+					# add one to the length of the potential chain
+					left -= 1
+				if left == 0 or i == len(line) - 1:
+					# if we finished a chain, reset
+					counts.append(count)
+					i = started + 1
+					count = 0
+					left = 4
+					started = None
+
+			i += 1
+
+		# return the longest chain in the line
+		return max(counts) if counts else 0
 
 	def _score(self, player: int) -> int:
 		"""Calculate the score (how good their situation is) of a given player.

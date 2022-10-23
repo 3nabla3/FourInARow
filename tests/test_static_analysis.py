@@ -6,11 +6,16 @@ def test_analyse_line():
 	assert MinMaxTree._analyze_line(list('.......'), 0) == 0
 	assert MinMaxTree._analyze_line(list('....#..'), 0) == 1
 	assert MinMaxTree._analyze_line(list('..##...'), 0) == 2
-	assert MinMaxTree._analyze_line(list('..#+...'), 0) == 0
+	assert MinMaxTree._analyze_line(list('..#+....'), 0) == 0
 	assert MinMaxTree._analyze_line(list('.##.#..'), 0) == 3
+	assert MinMaxTree._analyze_line(list('.###...'), 0) == 3
 	assert MinMaxTree._analyze_line(list('.##..#.'), 0) == 2
-	assert MinMaxTree._analyze_line(list('.#.#.+.'), 0) == 2
+	assert MinMaxTree._analyze_line(list('.#...#.'), 0) == 1
+	assert MinMaxTree._analyze_line(list('.#.#.+..'), 0) == 2
 	assert MinMaxTree._analyze_line(list('.#.#.#+'), 0) == 2
+	assert MinMaxTree._analyze_line(list('+###+..###'), 0) == 3
+	assert MinMaxTree._analyze_line(list('..#.#.#.#.##'), 0) == 3
+	assert MinMaxTree._analyze_line(list('..#.#.#.#.#.'), 0) == 2
 
 
 def test_score():

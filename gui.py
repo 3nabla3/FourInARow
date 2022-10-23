@@ -107,7 +107,7 @@ def main():
 		list('..+#+#.'),
 	]
 	game = Game(verbose=True)
-	fiar_mm = FIARMinMax(game, max_depth=5, plays=0, verbose=True, mt=False)
+	fiar_mm = FIARMinMax(game, max_depth=5, plays=1, verbose=True, mt=False)
 
 	running = True
 	while running:
