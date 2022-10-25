@@ -5,4 +5,6 @@ python3 -m venv venv
 
 python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements.txt
+
+chmod +x run.sh
 ./run.sh
